@@ -1,10 +1,14 @@
 import json
+import os
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from models import News, Base, Categories
 
+from dotenv import find_dotenv, load_dotenv
+load_dotenv(find_dotenv())
+
 # строка движок и подключение к базе данных
-engine = create_engine("sqlite:///my_base.db", echo=True)
+engine = create_engine(os.getenv('DB_LITE'), echo=True)
 conn = engine.connect()
 
 
@@ -32,23 +36,27 @@ session.commit()
 
 
 # открытие файла json после парсинга новостей
-with open('src/backend/dict_hub.json', encoding='utf-8') as dataframe:
+with open('data/dict_hub.json', encoding='utf-8') as dataframe:
     news = json.loads(dataframe.read())
 
 
-# заполнение таблицы News новостями из датасета после парсинга
+# заполнение таблицы News новостями из самого первого датасета
 for element, info_element in news.items():
-    cat = info_element['category']
-    if cat == "none":
-        cat = 'oth'
-    cat1 = select(Categories.id).where(Categories.name == cat)
-    cat = session.execute(cat1).first()
+    category = info_element['category']
 
+    # новости без категории закинем в категорию other
+    if category == "none":
+        category = 'oth'
+
+    # достаем id категории из бд
+    id_category_from_db = select(Categories.id).where(Categories.name == category)
+
+    # заполняем необходимые поля в нашей бд и закидываем в нее
     news = News(title=info_element['article_title'],
-                URL=info_element['article_url'],
-                category_id=cat1,
+                url=info_element['article_url'],
+                category_id=id_category_from_db,
                 score=info_element['score']
-                # content = info_element['text'],
+                # content = info_element['text'], # 
                 # summary = info_element['text']
                 )
 

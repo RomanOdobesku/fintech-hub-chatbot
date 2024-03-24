@@ -1,6 +1,6 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey, Table
-from sqlalchemy.orm import DeclarativeBase, relationship
+from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy.orm import DeclarativeBase
 
 
 # родительский класс для наследования остальных
@@ -15,7 +15,7 @@ class News(Base):
 
     id = Column(Integer(), primary_key=True, autoincrement=True)
     title = Column(String(150))
-    URL = Column(String(200), nullable=False)
+    url = Column(String(200), nullable=False)
     content = Column(Text())
     summary = Column(Text())
     category_id = Column(Integer(), nullable=False)
@@ -30,18 +30,17 @@ class Categories(Base):
     name = Column(String(100))
 
 
-# класс для пользователей бота (будем хранить и изменять выбранные ими категории)
+# класс для пользователей бота
 class Users(Base):
     __tablename__ = "Users"
 
     id = Column(Integer(), primary_key=True, autoincrement=True)
-    nick_name = Column(String(100))
+    username = Column(String(100))
     chat = Column(String(100))
 
-    # categories = relationship("Categories", secondary="User_categories")
 
-
-class User_categories(Base):
+# класс для хранения выбранных категорий пользователями бота
+class UserCategories(Base):
     __tablename__ = "User_categories"
 
     id = Column(Integer(), primary_key=True, autoincrement=True)
