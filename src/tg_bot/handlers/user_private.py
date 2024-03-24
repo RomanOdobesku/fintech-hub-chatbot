@@ -1,10 +1,10 @@
+import src.tg_bot.bot_database.db_query as db_query
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.enums.parse_mode import ParseMode
 from sqlalchemy.ext.asyncio import AsyncSession
-import bot_database.db_query as db_query
-from kb import reply
+from src.tg_bot.kb import reply
 
 
 user_private_router = Router()
@@ -99,7 +99,6 @@ async def send_news_to_subscribers(msg: Message, session: AsyncSession) -> None:
     for user in users_chat_id:
         message = ""
         subscriptions = await db_query.orm_get_users_categories(session, int(user))
-        print("subscriptions", subscriptions)
         for subscription in subscriptions:
             message += "\n*Ваши новости по теме '{}'* \n".format(category[int(subscription)])
             for news in latest_news[int(subscription)]:

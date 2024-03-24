@@ -1,18 +1,7 @@
-import sys
-import os
 from typing import Optional, List, Dict, Any
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-
-# для правильного имортирования файла из другой папки (иначе почему-то не работает)
-
-PACKAGE_PARENT = '..'
-SCRIPT_DIR = os.path.dirname(
-    os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__)))
-)
-sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT, PACKAGE_PARENT)))
-
-from backend.models import Users, Categories, UserCategories, News
+from src.backend.models import Users, Categories, UserCategories, News
 
 
 # ############ Категории ############# #
@@ -35,7 +24,7 @@ async def orm_get_id_category_by_name(session: AsyncSession,
 
 
 async def orm_get_name_category_by_id(session: AsyncSession,
-                                        id: int) -> Optional[str]:
+                                      id: int) -> Optional[str]:
     """
     Получает название категории из базы данных по ее идентификатору.
 
