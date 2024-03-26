@@ -1,11 +1,10 @@
 import os
-import asyncio
-
 from aiogram import Bot, Dispatcher
 from aiogram.enums.parse_mode import ParseMode
 from aiogram.fsm.strategy import FSMStrategy
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommandScopeAllPrivateChats
+
 
 from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv())
@@ -16,12 +15,11 @@ from src.tg_bot.bot_database.engine import session_maker
 from src.tg_bot.middlewares.db import DataBaseSession
 
 
-bot = Bot(token=os.getenv('TOKEN'), parse_mode=ParseMode.HTML)
-dp = Dispatcher(storage=MemoryStorage(),
-                fsm_strategy=FSMStrategy.USER_IN_CHAT)
-
-
 async def main() -> None:
+    bot = Bot(token=os.getenv('TOKEN'), parse_mode=ParseMode.HTML)
+    dp = Dispatcher(storage=MemoryStorage(),
+                    fsm_strategy=FSMStrategy.USER_IN_CHAT)
+
     dp.include_router(user_private_router)
 
     dp.update.middleware(DataBaseSession(session_pool=session_maker))

@@ -56,7 +56,7 @@ for element, info_element in news.items():
                 url=info_element['article_url'],
                 category_id=id_category_from_db,
                 score=info_element['score']
-                # content = info_element['text'], # 
+                # content = info_element['text'],
                 # summary = info_element['text']
                 )
 
