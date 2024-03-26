@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
@@ -139,6 +138,33 @@ async def category_hadnler(callback: CallbackQuery) -> None:
     await callback.message.delete()
     await callback.message.answer("Выбери категории для отслеживания:",
                                   reply_markup=reply.categories_kb)
+
+
+@user_private_router.callback_query(F.data.startswith('subscribe_finish'))
+async def subscribe_finish(callback: CallbackQuery,
+                           session: AsyncSession,
+                           apscheduler: AsyncIOScheduler,
+                           bot: Bot):
+    """
+    Обработчик нажатия на кнопку "finish". Убирает inline-клавиатуру с выбором категорий
+    и выводит сообщение о сохранении подписок.
+
+    Аргументы:
+    - callback (CallbackQuery): Объект сообщения от пользователя.
+    - session (AsyncSession): Сессия асинхронного соединения с базой данных.
+    - apscheduler (AsyncIOScheduler): Scheduler для запуска автоматической рассылки дайджеста.
+    - bot (Bot): Объект класса Bot для отправки сообщений.
+
+    Возвращает:
+    - None
+    """
+    await callback.message.edit_reply_markup()
+    await callback.message.delete()
+    await callback.message.answer(text='Подписки сохранены!')
+    apscheduler.add_job(send_message_time,
+                        trigger='cron',
+                        hour=16,
+                        kwargs={'bot': bot, 'session': session})
 
 
 @user_private_router.callback_query(F.data.startswith('subscribe_'))
