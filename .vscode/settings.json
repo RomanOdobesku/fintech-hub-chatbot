@@ -1,0 +1,9 @@
+{
+    "editor.codeActionWidget.includeNearbyQuickFixes": true,
+    "editor.codeActionWidget.showHeaders": true,
+    "editor.codeLens": true,
+    "editor.comments.ignoreEmptyLines": false,
+    "files.autoSave": "onWindowChange",
+    "editor.minimap.autohide": false,
+    "editor.minimap.enabled": false
+}
