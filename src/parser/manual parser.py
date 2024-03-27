@@ -1,6 +1,5 @@
 import requests
 from datetime import datetime, timedelta
-# !pip -qq install newspaper3k
 from newspaper import Article, ArticleException
 import json
 
