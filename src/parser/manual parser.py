@@ -1,8 +1,7 @@
-# !pip -qq install newspaper3k
-
 import requests
 from datetime import datetime, timedelta
 from newspaper import Article, ArticleException
+import json
 
 def parsing_www_rba_gov_au(check_years: int, date_news: datetime = datetime.now()) -> list:
     list_news = []
@@ -66,7 +65,7 @@ def parsing_www_oenb_at(check_days: int, date_news: datetime = datetime.now()) -
 def parsing_www_bcb_gov_br(check_nums: int) -> list:
     list_news = []
     for n in range(check_nums):
-        num_news = 2550 - n
+        num_news = 2500 + n
         article_url = f"https://www.bcb.gov.br/en/pressdetail/{num_news}/nota"
         req = requests.get(article_url)
         article = Article(url=article_url)
@@ -75,7 +74,7 @@ def parsing_www_bcb_gov_br(check_nums: int) -> list:
             article.parse()
         except ArticleException:
             print(f"status_code 404: {article_url}")
-            continue
+            break
         article_title = article.title
         article_text = article.text
         if article_text == "":
@@ -122,9 +121,12 @@ def parsing_www_hkma_gov_hk(check_days: int, date_news: datetime = datetime.now(
 def manual_parsing() -> list:
     list_news = []
     list_news.extend(parsing_www_rba_gov_au(check_years=2))
-    list_news.extend(parsing_www_oenb_at(check_days=200))
-    list_news.extend(parsing_www_bcb_gov_br(check_nums=100))
-    list_news.extend(parsing_www_hkma_gov_hk(check_days=100))
+    list_news.extend(parsing_www_oenb_at(check_days=90))
+    list_news.extend(parsing_www_bcb_gov_br(check_nums=90))
+    list_news.extend(parsing_www_hkma_gov_hk(check_days=7))
     return list_news
 
-# list_news = manual_parsing()
+list_json = manual_parsing()
+
+with open('manual parsing.json', 'w', encoding='utf-8') as file:
+    json.dump(list_json, file, indent=3)
