@@ -4,8 +4,9 @@ from datetime import datetime
 import re
 from newspaper import Article, ArticleException
 import json
+from typing import List, Dict
 
-def news_aggregator_parser():
+def news_aggregator_parser() -> List[Dict[str, str]]:
     """
         Функция для парсинга новостного агрегатора и сохранения результатов в JSON файл.
 
