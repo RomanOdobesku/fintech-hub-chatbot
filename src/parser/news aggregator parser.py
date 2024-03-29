@@ -123,4 +123,5 @@ def news_aggregator_parser():
     # Вовзращаем список словарей с информацией о новостях.
     return list_json
 
-print(news_aggregator_parser())
+if __name__ == '__main__':
+    print(news_aggregator_parser())
