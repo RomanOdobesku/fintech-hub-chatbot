@@ -44,9 +44,12 @@ def parsing_www_rba_gov_au(check_years: int = 2, date_news: datetime = datetime.
             LOGGER.info(f"status_code 200: {article_url}")
             article.nlp()
             article_summary = article.summary
+            article_keywords = article.keywords
 
             # Добавление новости в список
-            list_news.append({"article_title": article_url, "article_title": article_title, "article_text": article_text, "article_summary": article_summary})
+            list_news.append({"article_url": article_url, "article_title": article_title,
+                              "article_text": article_text, "article_summary": article_summary,
+                              "article_keywords": article_keywords})
 
     return list_news
 
@@ -88,9 +91,12 @@ def parsing_www_oenb_at(check_days: int = 90, date_news: datetime = datetime.now
         LOGGER.info(f"status_code 200: {article_url}")
         article.nlp()
         article_summary = article.summary
+        article_keywords = article.keywords
 
         # Добавление новости в список
-        list_news.append({"article_title": article_url, "article_title": article_title, "article_text": article_text, "article_summary": article_summary})
+        list_news.append({"article_url": article_url, "article_title": article_title,
+                          "article_text": article_text, "article_summary": article_summary,
+                          "article_keywords": article_keywords})
 
     return list_news
 
@@ -129,9 +135,12 @@ def parsing_www_bcb_gov_br(check_nums: int = 90, check_numbers: int = 2500) -> L
         LOGGER.info(f"status_code 200: {article_url}")
         article.nlp()
         article_summary = article.summary
+        article_keywords = article.keywords
 
         # Добавление новости в список
-        list_news.append({"article_title": article_url, "article_title": article_title, "article_text": article_text, "article_summary": article_summary})
+        list_news.append({"article_url": article_url, "article_title": article_title,
+                          "article_text": article_text, "article_summary": article_summary,
+                          "article_keywords": article_keywords})
 
     return list_news
 
@@ -173,9 +182,12 @@ def parsing_www_hkma_gov_hk(check_days: int = 7, date_news: datetime = datetime.
             LOGGER.info(f"status_code 200: {article_url}")
             article.nlp()
             article_summary = article.summary
+            article_keywords = article.keywords
 
             # Добавление новости в список
-            list_news.append({"article_title": article_url, "article_title": article_title, "article_text": article_text, "article_summary": article_summary})
+            list_news.append({"article_url": article_url, "article_title": article_title,
+                              "article_text": article_text, "article_summary": article_summary,
+                              "article_keywords": article_keywords})
 
     return list_news
 
@@ -203,11 +215,12 @@ def various_sources_parsing(check_years_www_rba_gov_au: int = 2, check_days_www_
     # Парсинг новостей с сайта www.hkma.gov.hk
     list_news.extend(parsing_www_hkma_gov_hk(check_days=check_days_www_hkma_gov_hk))
 
-    return list_news
+    with open('various sources parser result.json', 'w', encoding='utf-8') as file:
+        json.dump(list_news, file, indent=3)
 
+    return list_news
 
 if __name__ == '__main__':
     list_json = various_sources_parsing()
-
-    with open('various sources parsing.json', 'w', encoding='utf-8') as file:
-        json.dump(list_json, file, indent=3)
+    print(list_json)
+    print(len(list_json))
