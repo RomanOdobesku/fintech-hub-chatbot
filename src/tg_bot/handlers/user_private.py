@@ -25,9 +25,9 @@ async def start_handler(msg: Message, session: AsyncSession) -> None:
     Возвращает:
     - None
     """
-    await msg.answer("""Привет 👻, я виртуальный помощник для отслеживания новостей по разными темам в финтех-сфере! Выбери нужные категории, и я буду присылать тебе самые свежие новости!""",
+    await msg.answer("""Привет 👻, я виртуальный помощник для отслеживания новостей по разными темам в финтех-сфере! \n\nПерейди к выбору категорий по кнопке ниже, отметь подходящие темы и нажми кнопку finish, и я буду присылать тебе самые свежие новости!""",
                      reply_markup=reply.start_kb)
-    await db_query.orm_add_user(session, msg.from_user.id, msg.from_user.first_name)
+    await db_query.orm_add_user(session, str(msg.from_user.id), str(msg.from_user.first_name))
 
 
 @user_private_router.message(Command("restart"))
@@ -41,7 +41,7 @@ async def restart(msg: Message) -> None:
     Возвращает:
     - None
     """
-    await msg.answer("Вы уверены, что хотите сбросить текущие подписки?",
+    await msg.answer("Ты уверен, что хотите сбросить текущие подписки?",
                      reply_markup=reply.restart_categories_kb)
 
 
@@ -57,7 +57,7 @@ async def print_categories(msg: Message, session: AsyncSession) -> None:
     Возвращает:
     - None
     """
-    users_id = msg.from_user.id
+    users_id = str(msg.from_user.id)
     cats = await db_query.orm_get_users_categories(session, users_id)
     names = [await db_query.orm_get_name_category_by_id(session, element) for element in cats]
     answer_message = "Ваш список тем:\n"
@@ -77,7 +77,7 @@ async def help_handler(msg: Message) -> None:
     Возвращает:
     - None
     """
-    await msg.answer("""Тут потом будет краткая инфа о боте, о категориях, о дайджесте и других функциях, если они появятся""")
+    await msg.answer("""Если ты уже выбрал категории, то можешь получить составленный для тебя дайджест с помощью команды /digest, либо дождаться ежедневной рассылки (в 09:00). \nПосмотреть выбранные категории ты можешь по команде /my_categories, а сбросить прежние настройки и выбрать новые темы с помощью /restart.""")
 
 
 @user_private_router.message(Command("digest"))
@@ -99,13 +99,14 @@ async def send_news_to_subscribers(msg: Message, session: AsyncSession) -> None:
 
     for user in users_chat_id:
         message = ""
-        subscriptions = await db_query.orm_get_users_categories(session, int(user))
+        subscriptions = await db_query.orm_get_users_categories(session, str(user))
         for subscription in subscriptions:
-            message += "\n*Ваши новости по теме '{}'* \n".format(category[int(subscription)])
+            message += "\n*Ваши новости по теме {}* \n".format(category[int(subscription)])
             for news in latest_news[int(subscription)]:
-                message += f"\n{news.title}: {news.url}\n"
+                message += f"\n - {news.title}: [Читать в источнике]({news.url})\n"
+            message += '\n'
 
-        await msg.answer(message, parse_mode=ParseMode.MARKDOWN)
+        await msg.answer(message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
 
 @user_private_router.callback_query(F.data.startswith('print_help'))
@@ -121,7 +122,7 @@ async def print_help(callback: CallbackQuery):
     """
     await callback.message.edit_reply_markup()
     await callback.message.delete()
-    await callback.message.answer("""Тут потом будет краткая инфа о боте, о категориях, о дайджесте и других функциях, если они появятся""")
+    await callback.message.answer("""Выбери интересующие тебя категории с помощью кнопки "меню", и я буду присылать ежедневные дайджесты с важными актуальными новостями по интересующим тебя темам!""")
 
 
 @user_private_router.callback_query(F.data.startswith('choose_category'))
@@ -183,7 +184,7 @@ async def subscribe_topic(callback: CallbackQuery, session: AsyncSession):
     topic = callback.data.split("_")[-1]
 
     curr = await db_query.orm_get_id_category_by_name(session, topic)
-    await db_query.orm_add_users_category(session, callback.from_user.id, curr)
+    await db_query.orm_add_users_category(session, str(callback.from_user.id), curr)
 
 
 @user_private_router.callback_query(F.data.startswith('restart_no'))
@@ -217,7 +218,7 @@ async def restart_yes(callback: CallbackQuery, session: AsyncSession):
     - None
     """
     await callback.message.edit_reply_markup()
-    await db_query.orm_delete_users_category(session, callback.from_user.id)
+    await db_query.orm_delete_users_category(session, str(callback.from_user.id))
     await callback.message.answer("Все подписки удалены!")
     await callback.message.answer("Выбери категории для отслеживания:",
                                   reply_markup=reply.categories_kb)
@@ -240,7 +241,7 @@ async def send_message_time(bot: Bot, session: AsyncSession) -> None:
 
     for user in users_chat_id:
         message = ""
-        subscriptions = await db_query.orm_get_users_categories(session, int(user))
+        subscriptions = await db_query.orm_get_users_categories(session, str(user))
         for subscription in subscriptions:
             message += "\n*Ваши новости по теме '{}'* \n".format(category[int(subscription)])
             for news in latest_news[int(subscription)]:

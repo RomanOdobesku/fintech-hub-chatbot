@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -24,18 +25,18 @@ async def orm_get_id_category_by_name(session: AsyncSession,
 
 
 async def orm_get_name_category_by_id(session: AsyncSession,
-                                      id: int) -> Optional[str]:
+                                      cat_id: int) -> Optional[str]:
     """
     Получает название категории из базы данных по ее идентификатору.
 
     Аргументы:
     - session (AsyncSession): Сессия асинхронного соединения с базой данных.
-    - id (int): Идентификатор категории, по которому будет выполнен поиск.
+    - cat_id (int): Идентификатор категории, по которому будет выполнен поиск.
 
     Возвращает:
     - str: имя категории.
     """
-    query = select(Categories.name).where(Categories.id == id)
+    query = select(Categories.name).where(Categories.id == cat_id)
     result = await session.execute(query)
     return result.scalar()
 
@@ -65,23 +66,25 @@ async def orm_get_list_of_category(session: AsyncSession) -> Dict[int, str]:
 
 
 async def orm_add_user(session: AsyncSession,
-                       user_id: int,
+                       user_id: str,
                        nick: str) -> None:
     """
     Добавляет нового пользователя в базу данных, если записи о нем еще не существует.
 
     Аргументы:
     - session (Asyncsession): Сессия асинхронного соединения с базой данных.
-    - user_id (int): Идентификатор telegram-чата с пользователем.
+    - user_id (str): Идентификатор telegram-чата с пользователем.
     - nict (str): Имя пользователя из telegram.
 
     Возвращает:
     - None
     """
+
     query = select(Users).where(Users.chat == user_id)
     result = await session.execute(query)
     if result.first() is None:
-        session.add(Users(chat=user_id, username=nick))
+        user = Users(chat=user_id, username=nick)
+        session.add(user)
         await session.commit()
 
 
@@ -104,35 +107,35 @@ async def orm_get_list_of_users(session: AsyncSession) -> List[str]:
 
 
 async def orm_add_users_category(session: AsyncSession,
-                                 user: int,
+                                 user: str,
                                  category: int) -> None:
     """
     Добавляет выбранную категорию и идентификатор пользователя в базу данных.
 
     Аргументы:
     - session (AsyncSession): Сессия асинхронного соединения с базой данных.
-    - user (int): Идентификатор чата с пользователем.
+    - user (str): Идентификатор чата с пользователем.
     - category (int): Идентификато выбранной пользователем категории из базы данных.
 
     Возвращает:
     - None
     """
-    query = select(UserCategories).where(UserCategories.user_id == user,
+    query = select(UserCategories).where(UserCategories.user_id == str(user),
                                          UserCategories.category_id == category)
     result = await session.execute(query)
     if result.first() is None:
-        session.add(UserCategories(user_id=user, category_id=category))
+        session.add(UserCategories(user_id=str(user), category_id=category))
         await session.commit()
 
 
 async def orm_delete_users_category(session: AsyncSession,
-                                    user: int) -> None:
+                                    user: str) -> None:
     """
     Удаляет из базы данных категории, выбранные пользователем.
 
     Аргументы:
     - session (ASyncSession): Сессия асинхронного соединения с базой данных.
-    - user (int): Идентификатор чата с пользователем.
+    - user (str): Идентификатор чата с пользователем.
 
     Возвращает:
     - None
@@ -143,7 +146,7 @@ async def orm_delete_users_category(session: AsyncSession,
 
 
 async def orm_get_users_categories(session: AsyncSession,
-                                   user: int) -> List[int]:
+                                   user: str) -> List[int]:
     """
     Возвращает идентификаторы выбранных пользователем категорий.
 
@@ -171,11 +174,17 @@ async def orm_get_latest_news_by_categories(session: AsyncSession) -> Dict[int, 
 
     Возвращает:
     - Dict[int, List[Any]]: Словарь новостей, где ключ - идентификатор категории, а ключ - список с
-    соответствующими полями таблицы News базы данных."""
+    соответствующими полями таблицы News базы данных.
+    """
+
     news = dict()
+    current_time = datetime.now()
+    previous_day = current_time - timedelta(days=1)
+
     category_id = [i for i in range(1, 9)]
     for category in category_id:
-        query = select(News).where(News.category_id == category).order_by(News.created.desc()).limit(5)
+        query = select(News).where(News.category_id == category,
+                                   News.created >= previous_day).order_by(News.created.desc()).limit(5)
         result = await session.execute(query)
         result = result.scalars().all()
         news[category] = result
