@@ -51,7 +51,7 @@ def proxy_requests_aggregator_url(url: str, proxies: Dict[str, str]) -> List[Dic
             continue
     return content_news_for_one_url
 
-def news_aggregator_parser(start_proxy_index_list_url: int = 0, start_proxy_index_list_redirect: int = 0) -> List[Dict[str, str]]:
+def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: int = 0, start_proxy_index_list_redirect: int = 0) -> List[Dict[str, str]]:
     """
         Функция для парсинга новостного агрегатора и сохранения результатов в JSON файл.
 
@@ -91,9 +91,6 @@ def news_aggregator_parser(start_proxy_index_list_url: int = 0, start_proxy_inde
                 "https://www.newsnow.co.uk/h/Industry+Sectors/IT/Computer+Technology/Cloud+Computing?type=ln",
                 "https://www.newsnow.co.uk/h/Science/AI?type=ln",
                 "https://www.newsnow.co.uk/h/Technology/Cutting+Edge/Biometrics?type=ln"]
-
-    # URL-адреса новостного агрегатора
-    # url_list = ["https://www.newsnow.co.uk/h/Business+&+Finance?type=ln"]
 
     # Создаем список для хранения основной информации о новостях на сайте агрегатора для одного раздела
     content_news = []
@@ -137,7 +134,7 @@ def news_aggregator_parser(start_proxy_index_list_url: int = 0, start_proxy_inde
     filtered_content_news = []
     for news in content_news:
         if datetime.now() - datetime.strptime(news["time_str"],
-                                              "%Y-%m-%d %H:%M:%S") <= timedelta(minutes=240):
+                                              "%Y-%m-%d %H:%M:%S") <= timedelta(minutes=check_minutes+180):
             filtered_content_news.append(news)
 
     LOGGER.info(f"len(filtered_content_news): {len(filtered_content_news)}")
@@ -275,6 +272,6 @@ def news_aggregator_parser(start_proxy_index_list_url: int = 0, start_proxy_inde
     return list_json
 
 if __name__ == '__main__':
-    list_json = news_aggregator_parser(start_proxy_index_list_url=0, start_proxy_index_list_redirect=0)
+    list_json = news_aggregator_parser(check_minutes=30, start_proxy_index_list_url=0, start_proxy_index_list_redirect=0)
     print(list_json)
     print(len(list_json))
