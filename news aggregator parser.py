@@ -12,7 +12,6 @@ import json
 from typing import List, Dict
 from logger import LOGGER
 import time
-import pandas as pd
 
 def proxy_requests_aggregator_url(url: str, proxies: Dict[str, str]) -> List[Dict[str, str]]:
     # Отправляем GET-запрос на URL-адрес новостного агрегатора с таймаутом 120 секунд
@@ -52,7 +51,7 @@ def proxy_requests_aggregator_url(url: str, proxies: Dict[str, str]) -> List[Dic
             continue
     return content_news_for_one_url
 
-def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: int = 0, start_proxy_index_list_redirect: int = 0) -> List[Dict[str, str]]:
+def news_aggregator_parser(check_minutes: int = 30, start_proxy_index_list_url: int = 0, start_proxy_index_list_redirect: int = 0) -> List[Dict[str, str]]:
     """
         Функция для парсинга новостного агрегатора и сохранения результатов в JSON файл.
 
@@ -271,9 +270,6 @@ def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: 
 
     # Вовзращаем список словарей с информацией о новостях.
     return list_json
-
-def list_json_to_df(links:list[dict])->pd.Dataframe:
-    return pd.Dataframe(links).drop(columns=['article_time_str','article_title_generate','article_publisher']).rename(columns={'article_url':'url','article_title':'title','article_text':'content','article_time':'time'})
 
 if __name__ == '__main__':
     list_json = news_aggregator_parser(check_minutes=30, start_proxy_index_list_url=0, start_proxy_index_list_redirect=0)
