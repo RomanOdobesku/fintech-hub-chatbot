@@ -2,9 +2,9 @@ import time
 from datetime import datetime
 from datetime import timezone
 import feedparser
-import aiohttp
-import requests
-from requests import get
+# import aiohttp
+# import requests
+# from requests import get
 
 # from dockered_parser import database
 import database
@@ -75,14 +75,13 @@ def _parse_rss(texts: list[str], target_time: datetime, max_news_per_source: int
 #     print(item)
 
 def parser(target_time: float, max_news_per_source: int = 20, timeout: int = 100):
-    links = parse_links(rss_list.links[:10], timeout)
+    links = parse_links(rss_list.links, timeout)
     news = _parse_rss(links, datetime.fromtimestamp(target_time, tz=timezone.utc), max_news_per_source)
     df = pd.DataFrame(news, columns=['time', 'title', 'content', 'url'])
     print(df)
     database.fill_database_from_parser(df)
 
-
 # database.create_tables()
 while True:
-    parser(time.time() - 10 * 60 * 24 * 60)
-    time.sleep(10 * 60)
+    parser(time.time() - 30 * 60)
+    time.sleep(30 * 60)

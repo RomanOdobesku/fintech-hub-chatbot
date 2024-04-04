@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 # import advertools as adv
 import pandas as pd
-from pandas import Timestamp
+# from pandas import Timestamp
 
 import advtools_enhanced as adv
 import database

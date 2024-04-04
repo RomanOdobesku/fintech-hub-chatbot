@@ -106,7 +106,7 @@ links = [
     # 'https://www.prnewswire.com/sv/sitemap-news.xml',
     # 'https://www.prnewswire.com/sv/sitemap.xml',
     'https://www.psr.org.uk/sitemap.xml',
-    'https://www.rbc.ru/sitemap_index.xml',
+    # 'https://www.rbc.ru/sitemap_index.xml',
     'https://www.resbank.co.za/en.sitemap.xml',
     'https://www.sca.gov.ae/sitemap.xml',
     'https://www.scb.gov.bs/wp-sitemap.xml',

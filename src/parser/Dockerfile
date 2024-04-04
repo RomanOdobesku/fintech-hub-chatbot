@@ -8,10 +8,10 @@ LABEL Maintainer="roushan.me17"
 RUN pip install virtualenv
 #RUN pip install kubernetes
 RUN pip install pandas
-RUN pip install beautifulsoup4
+RUN pip install beautifulsoup4 asyncio rss-parser
 #RUN pip install gensim
-RUN pip install asyncio
-RUN pip install rss-parser
+RUN pip install sqlalchemy feedparser python-dotenv aiohttp
+RUN pip install psycopg2
 # Any working directory can be chosen as per choice like '/' or '/home' etc
 # i have chosen /usr/app/src
 WORKDIR /usr/app/src
@@ -25,6 +25,7 @@ COPY dockered_parser ./
 
 CMD ["python","./parser.py"]
 CMD ["python","./aggregator_parser.py"]
+CMD ["python","./rssparser.py"]
 #CMD [ "python", "./start.py"]
 ##CMD ["dockered_parser","sheduler"]
 ## initialize the database tables
