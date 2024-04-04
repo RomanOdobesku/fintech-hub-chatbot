@@ -93,7 +93,6 @@ def fill_database_from_parser(news: pd.DataFrame):
 #     global _session_async
 #     if _session_async is None:
 #         _session_async = sessionmaker(_engine_async, expire_on_commit=False, class_=AsyncSession)()
-#
 #     for (_id, new) in news.iterrows():
 #         element = News(
 #             title=new['title'],
