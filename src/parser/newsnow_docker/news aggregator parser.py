@@ -229,9 +229,10 @@ def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: 
         # Создаем объект Article из библиотеки newspaper для извлечения данных из статьи
         article = ''
         try:
-            article = requests.get(list_news[i]["url"],timeout=100).text
+            print("parsing " + list_news[i]["url"])
+            article = requests.get(list_news[i]["url"], timeout=100).text
         except:
-            print('cant parse')
+            print('cant get with request')
         # Извлекаем заголовок статьи
         article_title = article[:100]
 
@@ -242,12 +243,17 @@ def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: 
             article = BeautifulSoup(article)
 
             # Извлекаем заголовок статьи
-            article_title = ' '.join(article.find_all('title'))
+            try:
+                article_title = ' '.join(article.find('title').string)
+            except Exception as e:
+                print('title parsing error', e)
+                pass
 
             # Извлекаем текст статьи
             article_text = article.text
-        except:
-            continue
+        except Exception as e:
+            print('parse error')
+            print(e)
 
         # # Применяем обработку естественного языка (NLP) к статье
         # article.nlp()
@@ -267,7 +273,8 @@ def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: 
         # Создаем словарь с информацией о статье
         dict_news = {"article_url": list_news[i]["url"], "article_title": list_news[i]["title"],
                      "article_title_generate": article_title, "article_publisher": list_news[i]['publisher'],
-                     "article_time": list_news[i]["time"], "article_time_str": list_news[i]["time_str"],
+                     "article_time": pd.Timestamp(int(list_news[i]["time"]), unit='s'),
+                     "article_time_str": list_news[i]["time_str"],
                      "article_text": article_text}
 
         # Добавляем информацию о новости в список list_json
@@ -275,9 +282,12 @@ def news_aggregator_parser(check_minutes: int = 60, start_proxy_index_list_url: 
 
         LOGGER.info(f"Обработано прямых ссылок: {i + 1}/{len(list_news)}")
 
-    # Сохраняем результаты в JSON файл
-    with open('../news aggregator parser result.json', 'w', encoding='utf-8') as file:
-        json.dump(list_json, file, indent=3)
+    # # Сохраняем результаты в JSON файл
+    # with open('../news aggregator parser result.json', 'w', encoding='utf-8') as file:
+    #     try:
+    #         json.dump(list_json, file, indent=3)
+    #     except:
+    #         pass
 
     # Вовзращаем список словарей с информацией о новостях.
     return list_json
@@ -294,7 +304,11 @@ if __name__ == '__main__':
     while True:
         list_json = news_aggregator_parser(check_minutes=30, start_proxy_index_list_url=0,
                                            start_proxy_index_list_redirect=0)
-        to_update = database.fill_database_from_parser(list_json_to_df(list_json))
+        # print(list_json)
+        list_json = list_json_to_df(list_json)
+        print(list_json)
+
+        to_update = database.fill_database_from_parser(list_json)
         to_update = pd.DataFrame(to_update)
         database.update_news(to_update)
         time.sleep(30 * 60)
