@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from newspaper import Article, ArticleException
 import json
 from typing import List, Dict
-from logger import LOGGER
+from src.parser.newsnow_docker.logger import LOGGER
 
 def parsing_www_rba_gov_au(check_years: int = 2, date_news: datetime = datetime.now(), check_news_numbers: int = 50) -> List[Dict[str, str]]:
     """

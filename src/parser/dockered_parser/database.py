@@ -1,11 +1,13 @@
-import json
-import os
+import os, sys
+
+#todo
+# sys.path.insert(1, "\\".join(os.path.realpath(__file__).split("\\")[0:-3]))
 
 import pandas as pd
+from bs4 import BeautifulSoup
 from sqlalchemy.exc import NoResultFound, IntegrityError
 
 from models import Base
-from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -14,6 +16,8 @@ from dotenv import load_dotenv
 
 _engine = None
 _session = None
+
+
 # _engine_async = None
 # _session_async = None
 
@@ -28,8 +32,9 @@ def create_tables():
     Base.metadata.create_all(_engine)
 
 
-def fill_database_from_parser(news: pd.DataFrame):
+def fill_database_from_parser(news: pd.DataFrame) -> list[str]:
     # Example of filling the table with data from the parser
+    new_articles_without_content = []
     global _engine
     if _engine is None:
         load_dotenv('.env')
@@ -54,6 +59,8 @@ def fill_database_from_parser(news: pd.DataFrame):
                 content=new['content'],
                 created=new['time'],
             )
+            if new['content'] is None:
+                new_articles_without_content.append(new)
             _session.add(element)
             # print('added')
         except Exception as e:
@@ -69,6 +76,50 @@ def fill_database_from_parser(news: pd.DataFrame):
         _session.rollback()
         print("An error occurred while committing changes:", e)
     print('data pushed to database')
+    _session.close()
+    _session = None
+    _engine.dispose()
+    _engine = None
+    return new_articles_without_content
+
+
+def update_news(news: pd.DataFrame):
+    global _engine
+    if _engine is None:
+        load_dotenv('.env')
+        _engine = create_engine(os.getenv('DB_POSTGRESQL_ASYNC'))
+    global _session
+    if _session is None:
+        _session = sessionmaker(_engine, expire_on_commit=False)()
+
+    for (_, new) in news.iterrows():
+        url = new['url']
+        try:
+            # Check if the URL already exists in the database
+            article = _session.query(News).filter(News.url == url).one()
+            try:
+                workout = BeautifulSoup(new['content'], features='lxml').text
+                new['content'] = workout
+            except:
+                pass
+            article.content = new['content']
+
+            try:
+                _session.commit()
+            except IntegrityError:
+                _session.rollback()
+                print("IntegrityError occurred. Rolling back changes.")
+            except Exception as e:
+                _session.rollback()
+                print("An error occurred while committing changes:", e)
+            continue
+        except NoResultFound:
+            print("error occured: no instances to update found")
+        except Exception as e:
+            print("An error occurred while querying the database:", e)
+            _session.rollback()
+            continue
+    print('data updated in database')
     _session.close()
     _session = None
     _engine.dispose()

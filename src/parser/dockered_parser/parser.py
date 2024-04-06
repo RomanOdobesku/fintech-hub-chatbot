@@ -97,7 +97,9 @@ def parse(source_links, delta_time, csv_filename, timeout):
         cropped_sites[i].extend(parsed_links[i])
     df = pd.DataFrame(cropped_sites)
     df = df.rename(columns={'0': 'title', '1': 'content', '2': 'time', '3': 'url'})
-    database.fill_database_from_parser(df)
+    to_update = database.fill_database_from_parser(df)
+    to_update = pd.DataFrame(to_update)
+    database.update_news(to_update)
     df.to_csv(str(os.path.dirname(__file__)) + '/' + csv_filename)
 
 

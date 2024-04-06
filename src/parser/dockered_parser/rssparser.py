@@ -79,7 +79,9 @@ def parser(target_time: float, max_news_per_source: int = 20, timeout: int = 100
     news = _parse_rss(links, datetime.fromtimestamp(target_time, tz=timezone.utc), max_news_per_source)
     df = pd.DataFrame(news, columns=['time', 'title', 'content', 'url'])
     print(df)
-    database.fill_database_from_parser(df)
+    to_update = database.fill_database_from_parser(df)
+    to_update = pd.DataFrame(to_update)
+    database.update_news(to_update)
 
 # database.create_tables()
 while True:
