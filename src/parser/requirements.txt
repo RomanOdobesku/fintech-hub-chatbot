@@ -1,5 +1,0 @@
-requests==2.25.1
-beautifulsoup4==4.9.3
-regex==2021.4.4
-newspaper3k==0.2.8
-python-dotenv==1.0.1
