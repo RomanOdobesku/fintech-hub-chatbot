@@ -53,6 +53,7 @@ async def orm_get_list_of_category(session: AsyncSession) -> Dict[int, str]:
     - Dict[int, str]: Словарь с категориями, где ключ - идентификатор категории,
     значение - название категории
     """
+
     query = select(Categories)
     result = await session.execute(query)
     result = result.scalars()
@@ -122,6 +123,7 @@ async def orm_add_users_category(session: AsyncSession,
     """
     query = select(UserCategories).where(UserCategories.user_id == str(user),
                                          UserCategories.category_id == category)
+
     result = await session.execute(query)
     if result.first() is None:
         session.add(UserCategories(user_id=str(user), category_id=category))
@@ -157,9 +159,15 @@ async def orm_get_users_categories(session: AsyncSession,
     Возвращает:
     - List[int]: Список идентификаторов из базы данных выбранных категорий.
     """
+
+    print()
+    print('ПОЛЬЗОВАТЕЛЬСКИЕ КАТЕГОРИИ ТУТ')
+    print()
+
     query = select(UserCategories.category_id).where(UserCategories.user_id == user)
     result = await session.execute(query)
-    return result.scalars().all()
+    result = result.scalars().all()
+    return result
 
 
 # ############ Новости ############# #
@@ -184,7 +192,11 @@ async def orm_get_latest_news_by_categories(session: AsyncSession) -> Dict[int, 
     category_id = [i for i in range(1, 9)]
     for category in category_id:
         query = select(News).where(News.category_id == category,
-                                   News.created >= previous_day).order_by(News.created.desc()).limit(5)
+                                   News.updated >= previous_day,
+                                   News.score == 1,
+                                   News.content is not None,
+                                   News.summary is not None,
+                                   News.summary != "Something went wrong, there's no text in DB").order_by(News.updated.desc())
         result = await session.execute(query)
         result = result.scalars().all()
         news[category] = result

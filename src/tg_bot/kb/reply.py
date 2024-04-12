@@ -9,16 +9,25 @@ start_kb = InlineKeyboardMarkup(
 
 categories_kb = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='cr', callback_data="subscribe_cr")],
-        [InlineKeyboardButton(text='ai', callback_data="subscribe_ai")],
-        [InlineKeyboardButton(text="cbdc", callback_data="subscribe_cbdc")],
-        [InlineKeyboardButton(text="bid", callback_data="subscribe_bid")],
-        [InlineKeyboardButton(text="tok", callback_data="subscribe_tok")],
-        [InlineKeyboardButton(text="defi", callback_data="subscribe_defi")],
-        [InlineKeyboardButton(text="api", callback_data="subscribe_api")],
-        [InlineKeyboardButton(text="other", callback_data="subscribe_oth")],
-        [InlineKeyboardButton(text="finish", callback_data="subscribe_finish")]
-    ]
+        [InlineKeyboardButton(text='Крипто',
+                              callback_data="subscribe_Крипто")],
+        [InlineKeyboardButton(text='Искусственный интеллект',
+                              callback_data="subscribe_Искусственный интеллект")],
+        [InlineKeyboardButton(text="ЦВЦБ",
+                              callback_data="subscribe_ЦВЦБ")],
+        [InlineKeyboardButton(text="Биометрия и идентификация",
+                              callback_data="subscribe_Биометрия и идентификация")],
+        [InlineKeyboardButton(text="Токенизация",
+                              callback_data="subscribe_Токенизация")],
+        [InlineKeyboardButton(text="Децентрализованные финансы",
+                              callback_data="subscribe_Децентрализованные финансы")],
+        [InlineKeyboardButton(text="Открытые API",
+                              callback_data="subscribe_Открытые API")],
+        [InlineKeyboardButton(text="Прочее",
+                              callback_data="subscribe_Прочее")],
+        [InlineKeyboardButton(text="finish",
+                              callback_data="subscribe_finish")]
+    ],
 )
 
 restart_categories_kb = InlineKeyboardMarkup(
