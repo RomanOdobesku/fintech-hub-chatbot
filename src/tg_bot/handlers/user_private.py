@@ -1,11 +1,16 @@
+import docx
+import tempfile
+import datetime
+from aiogram import Bot
 from aiogram import Router, F
+from aiogram.types import FSInputFile
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.enums.parse_mode import ParseMode
 from sqlalchemy.ext.asyncio import AsyncSession
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from aiogram import Bot
-
+from docx.shared import Pt, RGBColor
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from src.tg_bot.kb import reply
 import src.tg_bot.bot_database.db_query as db_query
 
@@ -60,10 +65,10 @@ async def print_categories(msg: Message, session: AsyncSession) -> None:
     users_id = str(msg.from_user.id)
     cats = await db_query.orm_get_users_categories(session, users_id)
     names = [await db_query.orm_get_name_category_by_id(session, element) for element in cats]
-    answer_message = "Ваш список тем:\n"
+    answer_message = "*Ваш список тем:*\n"
     for element in names:
         answer_message += f"- {element}\n"
-    await msg.answer(answer_message)
+    await msg.answer(answer_message, parse_mode=ParseMode.MARKDOWN)
 
 
 @user_private_router.message(Command("help"))
@@ -81,7 +86,7 @@ async def help_handler(msg: Message) -> None:
 
 
 @user_private_router.message(Command("digest"))
-async def send_news_to_subscribers(msg: Message, session: AsyncSession) -> None:
+async def send_news_to_subscribers(msg: Message, session: AsyncSession, bot: Bot) -> None:
     """
     Обработчик команды "/digest". Выводит по 5 недавних новостей
     по категориям, выбранных пользователем.
@@ -94,19 +99,23 @@ async def send_news_to_subscribers(msg: Message, session: AsyncSession) -> None:
     - None
     """
     users_chat_id = await db_query.orm_get_list_of_users(session)
+
     latest_news = await db_query.orm_get_latest_news_by_categories(session)
     category = await db_query.orm_get_list_of_category(session)
-
+    
     for user in users_chat_id:
         message = ""
         subscriptions = await db_query.orm_get_users_categories(session, str(user))
         for subscription in subscriptions:
-            message += "\n*Ваши новости по теме {}* \n".format(category[int(subscription)])
-            for news in latest_news[int(subscription)]:
-                message += f"\n - {news.title}: [Читать в источнике]({news.url})\n"
+            # создаем сообщение для рассылки
+            message += "\n*{}* \n".format(category[int(subscription)])
+            for news in latest_news[int(subscription)][:5]:
+                    message += f"\n - {news.title}. [Читать в источнике]({news.url})\n"
             message += '\n'
 
         await msg.answer(message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+
+        await send_docx_to_subscribers(session, bot)
 
 
 @user_private_router.callback_query(F.data.startswith('print_help'))
@@ -181,6 +190,7 @@ async def subscribe_topic(callback: CallbackQuery, session: AsyncSession):
     Возвращает:
     - None
     """
+
     topic = callback.data.split("_")[-1]
 
     curr = await db_query.orm_get_id_category_by_name(session, topic)
@@ -243,8 +253,87 @@ async def send_message_time(bot: Bot, session: AsyncSession) -> None:
         message = ""
         subscriptions = await db_query.orm_get_users_categories(session, str(user))
         for subscription in subscriptions:
-            message += "\n*Ваши новости по теме '{}'* \n".format(category[int(subscription)])
+            message += "\n*'{}'* \n".format(category[int(subscription)])
             for news in latest_news[int(subscription)]:
                 message += f"{news.title}: {news.url}\n"
+        message += "\n Все последние новости и краткую информацию по ним ты можешь найти в файле под этим сообщением."
+
+        await send_docx_to_subscribers(session, bot)
 
         await bot.send_message(chat_id=user, text=message, parse_mode=ParseMode.MARKDOWN)
+
+
+async def send_docx_to_subscribers(session: AsyncSession, bot: Bot) -> None:
+    """
+    Составляет дайджест новостей в формате документа docx и рассылает пользователям.
+
+    Аргументы:
+    - bot (Bot): Объект бота для рассылки документов пользователям.
+    - session (AsyncSession): Сессия асинхронного соединения с базой данных.
+
+    Возвращает:
+    - None
+    """
+    users_chat_id = await db_query.orm_get_list_of_users(session)
+
+    latest_news = await db_query.orm_get_latest_news_by_categories(session)
+    category = await db_query.orm_get_list_of_category(session)
+
+    today = datetime.date.today().isoformat()
+
+    for user in users_chat_id:
+        with tempfile.NamedTemporaryFile(suffix='.docx', delete=False) as temp_file:
+            doc = docx.Document()
+
+            # колонтикулы
+            header = doc.sections[0].header
+            header_para = header.paragraphs[0] if header.paragraphs else header.add_paragraph()
+            header_para.text = f"Дайджест Финтех новостей на {today}"
+            run = header_para.runs[0]
+            run.font.name = 'Arial'
+            run.font.size = Pt(11)
+
+            subscriptions = await db_query.orm_get_users_categories(session, str(user))
+
+            for subscription in subscriptions:
+                # название категории
+                category_paragraph = doc.add_paragraph()
+                category_run = category_paragraph.add_run(category[int(subscription)])
+                category_run.bold = True
+                category_run.font.size = Pt(20)
+                category_run.font.name = 'Arial'
+                category_run.font.color.rgb = RGBColor(0, 0, 0)
+                category_run.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+                for news in latest_news[int(subscription)]:
+
+                    # форматирование для новостного заголовка
+                    doc.add_paragraph()
+                    new_title = doc.add_paragraph()
+                    new_title_run = new_title.add_run(news.title + ":")
+                    new_title_run.bold = True
+                    new_title_run.font.name = 'Arial'
+                    new_title_run.font.size = Pt(11)
+                    new_title_run.font.color.rgb = RGBColor(0, 136, 238)
+
+                    # форматирование для текста саммари новости
+                    if news.summary is not None:
+                        new_content = doc.add_paragraph()
+                        new_content_run = new_content.add_run(news.summary)
+                        new_content_run.font.size = Pt(11)
+                        new_content_run.font.color.rgb = RGBColor(0, 0, 0)
+                        new_content_run.font.name = 'Arial'
+
+                    # форматирование для ссылка на исходник
+                    new_url = doc.add_paragraph()
+                    new_url_run = new_url.add_run("Ссылка на источник: " + news.url)
+                    new_url_run.font.name = 'Arial'
+                    new_url_run.font.italic = True
+                    new_url_run.font.size = Pt(11)
+                    new_url_run.font.color.rgb = RGBColor(0, 0, 0)
+
+            doc.save(temp_file.name)
+
+            with open(temp_file.name, mode='rb') as f:
+                text_file = FSInputFile(f.name, filename=f'news_digest_{today}.docx')
+                await bot.send_document(user, text_file)

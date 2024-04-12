@@ -1,33 +1,46 @@
 import json
-import os
+from sqlalchemy.engine import URL
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import IntegrityError
 from models import News, Base, Categories
 
 from dotenv import find_dotenv, load_dotenv
 load_dotenv(find_dotenv())
 
+
 # строка движок и подключение к базе данных
-engine = create_engine(os.getenv('DB_LITE'), echo=True)
-conn = engine.connect()
+# engine = create_engine(os.getenv('DB_POSTGRESQL'), echo=True)
+
+connection_string = URL.create(
+  'postgresql',
+  username='olga',
+  password='XGAs4trRJ0hW',
+  host='ep-bold-mouse-a2jqmrzs.eu-central-1.aws.neon.tech',
+  database='postgresql',
+  query={'sslmode': 'require'}
+)
+
+engine = create_engine(connection_string, echo=True)
 
 
 # создаем полученную базу данных и сохраняем ее (пока пустую)
-Base.metadata.create_all(engine)
+# Base.metadata.drop_all(engine)
+# Base.metadata.create_all(engine)
 
 
 # подготовляем сессию для работы
 session = sessionmaker(bind=engine)()
 
 # заполнение таблицы categories известными категориями
-category_list = ["cr",
-                 "ai",
-                 "cbdc",
-                 "oth",
-                 "bid",
-                 "tok",
-                 "defi",
-                 "api"]
+category_list = {"cr": "Крипто",
+                 "ai": "Искусственный интеллект",
+                 "cbdc": "ЦВЦБ",
+                 "oth": "Прочее",
+                 "bid": "Биометрия и идентификация",
+                 "tok": "Токенизация",
+                 "defi": "Децентрализованные финансы",
+                 "api": "Открытые API"}
 
 for ctg in category_list:
     element = Categories(name=ctg)
@@ -46,7 +59,7 @@ for element, info_element in news.items():
 
     # новости без категории закинем в категорию other
     if category == "none":
-        category = 'oth'
+        category = 'Прочее'
 
     # достаем id категории из бд
     id_category_from_db = select(Categories.id).where(Categories.name == category)
@@ -61,4 +74,8 @@ for element, info_element in news.items():
                 )
 
     session.add(news)
-session.commit()
+    try:
+        session.commit()
+    except IntegrityError:
+        session.rollback()
+        print('Новость с таким url уже внесена в базу данных. Пропускаем...')

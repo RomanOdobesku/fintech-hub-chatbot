@@ -13,10 +13,10 @@ class News(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     title = Column(String(300))
-    url = Column(String(300), nullable=False)
+    url = Column(String(300), nullable=False, unique=True)
     content = Column(Text())
     summary = Column(Text())
-    category_id = Column(Integer(), nullable=False)
+    category_id = Column(Integer())
     score = Column(Integer())
     created = Column(DateTime, default=datetime.now())
     updated = Column(DateTime, default=datetime.now(), onupdate=datetime.now)
@@ -38,7 +38,7 @@ class Users(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(100))
-    chat = Column(String(100))
+    chat = Column(String(100), unique=True)
     created = Column(DateTime, default=datetime.now())
     updated = Column(DateTime, default=datetime.now(), onupdate=datetime.now)
 
