@@ -1,0 +1,31 @@
+# docker build -t fastapi_nn_models -f Dockerfile-fastapi-nn-models .
+# docker run --name fastapi_nn_models -p 8000:8000 --gpus all -v /home/user-1/fintech-hub-chatbot/models:/app/models fastapi_nn_models
+# docker stop fastapi_nn_models
+# docker rm fastapi_nn_models
+FROM nvidia/cuda:11.6.1-base-ubuntu20.04
+
+WORKDIR /app 
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y \
+        python3-pip \
+        python3-dev \
+        libglib2.0-0
+
+RUN pip3 install --no-cache-dir --upgrade pip \
+ && pip3 install --no-cache-dir --upgrade pip setuptools wheel
+
+COPY ./requirements.txt ./requirements.txt
+
+RUN pip3 install --no-cache-dir -r ./requirements.txt
+
+EXPOSE 8000
+
+COPY ./src/ml /app/src/ml
+COPY ./src/backend /app/src/backend
+
+CMD ["python3", "-m", "src.ml.fastapi_nn_models"]

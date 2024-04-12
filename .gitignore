@@ -1,2 +1,5 @@
 /src/parser/dockered_parser/.env
 /src/parser/newsnow_docker/.env
+
+/models/category-distilbert
+/models/title-distilbert
